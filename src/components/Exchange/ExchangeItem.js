@@ -8,7 +8,7 @@ import {API_URL} from "@/constant/Constant";
 const ExchangeItem =({className,name,imgUrl}) =>{
 
     const exportTicker = (exchange,symbolType) => {
-        window.location.href =`${API_URL}/scanner/export/${name}_${symbolType}`;
+        window.location.href =`${API_URL}/scanner/export?exchange=${name}&symbolType=${symbolType}`;
     }
 
     return (
