@@ -16,8 +16,6 @@ COPY . .
 # Build the Next.js application
 RUN npm run build
 
-# Install only production dependencies
-RUN npm ci --omit=dev
 
 # Stage 2: Run the application
 FROM node:18-alpine
