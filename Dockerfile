@@ -1,33 +1,38 @@
 # Stage 1: Build the application
-FROM gradle:8.4-jdk17 AS build
+FROM node:18-alpine AS builder
 
-# Set the working directory for the build process
+# Set working directory inside the container
 WORKDIR /app
 
-# Copy only Gradle wrapper and build files first for caching dependencies
-COPY gradlew settings.gradle build.gradle ./
-COPY gradle ./gradle
+# Copy package.json and package-lock.json (or yarn.lock)
+COPY package*.json ./
 
-# Pre-cache dependencies (speeds up subsequent builds)
-RUN ./gradlew build --no-daemon || true
+# Install dependencies
+RUN npm install --frozen-lockfile
 
-# Copy the rest of the source code
+# Copy the rest of the application source code
 COPY . .
 
-# Build the application (produces a JAR file in /app/build/libs)
-RUN ./gradlew clean bootJar --no-daemon
+# Build the Next.js application
+RUN npm run build
+
+# Install only production dependencies
+RUN npm ci --omit=dev
 
 # Stage 2: Run the application
-FROM openjdk:17-jdk-slim
+FROM node:18-alpine
 
-# Set the working directory for the runtime
+# Set working directory inside the container
 WORKDIR /app
 
-# Copy the built JAR from the first stage
-COPY --from=build /app/build/libs/*.jar app.jar
+# Copy the build output and production dependencies from the builder
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./
 
-# Expose the Spring Boot default port
-EXPOSE 8080
+# Expose the port your app runs on
+EXPOSE 3000
 
-# Command to run the Spring Boot application
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Start the Next.js application
+CMD ["npm", "start"]
