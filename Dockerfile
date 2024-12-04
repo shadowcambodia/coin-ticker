@@ -8,7 +8,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install --production --frozen-lockfile
+RUN npm install --frozen-lockfile
 
 # Copy the rest of the application source code
 COPY . .
@@ -16,6 +16,8 @@ COPY . .
 # Build the Next.js application
 RUN npm run build
 
+# Install only production dependencies
+RUN npm ci --omit=dev
 
 # Stage 2: Run the application
 FROM node:18-alpine
